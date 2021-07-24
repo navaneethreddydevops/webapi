@@ -2,6 +2,9 @@ on:
   push:
     branches:
       - master
+      - prod
+  pull_request:
+    types: [closed]
 
 name: dotnet-pipeline
 
@@ -24,7 +27,7 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
 
-      - name: Build,Tag,Push
+      - name: Non-Prod-Build,Tag,Push
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: webapi-nonprod
@@ -33,7 +36,7 @@ jobs:
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
-      - name: Build,Tag,Push
+      - name: Prod-Build,Tag,Push
         # Publish if prod branch
         if: github.ref == 'refs/heads/prod'
         env:
