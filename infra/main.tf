@@ -35,8 +35,8 @@ resource "aws_internet_gateway" "igw" {
 }
 
 resource "aws_subnet" "subnet_1" {
-  availability_zone = element(data.aws_availability_zones.us-east-azs.names, 0)
-  vpc_id            = "us-east-1a"
+  availability_zone = "us-east-1a"
+  vpc_id            = aws_vpc.vpc_devops.id
   cidr_block        = "10.0.1.0/24"
 }
 
