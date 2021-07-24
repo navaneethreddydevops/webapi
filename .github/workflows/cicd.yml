@@ -27,13 +27,8 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
 
-      - name: Output Run ID
-        run: echo ${{ github.run_id }}
-
-      - name: Output Run Number
-        run: echo ${{ github.run_number }}
-
       - name: Non-Prod-Build,Tag,Push
+        id: build-image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: webapi-nonprod
@@ -42,7 +37,9 @@ jobs:
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+
       - name: Prod-Build,Tag,Push
+        id: build-image
         # Publish if prod branch
         if: github.ref == 'refs/heads/prod'
         env:
@@ -58,10 +55,15 @@ jobs:
         if: always()
         run: docker logout ${{steps.login-ecr.outputs.registry}}
 
+      - name: Download task definition
+      run: |
+        aws ecs describe-task-definition --task-definition webapi-nonprod \
+        --query taskDefinition > webapi-nonprod.json
+
       - name: Fill in the new image ID in the Amazon ECS task definition
         id: task-def
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
-          task-definition: webapi.json
+          task-definition: webapi-nonprod.json
           container-name: webapi
           image: ${{ steps.build-image.outputs.image }}
