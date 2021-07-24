@@ -21,7 +21,6 @@ RUN dotnet restore "WebAPI/WebAPI.csproj"
 
 WORKDIR "/src/."
 
-
 RUN dotnet build "WebAPI/WebAPI.csproj" -c Release -o /app/build
 
 FROM build AS publish
