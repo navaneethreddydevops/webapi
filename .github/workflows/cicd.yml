@@ -32,12 +32,12 @@ jobs:
         env:
           ECR_REGISTRY : ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: webapi-nonprod
-          IMAGE_TAG: ${{ github.sha}}
+          IMAGE_TAG: ${{ github.sha }}
         run: |
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY
           docker tag $ECR_REGISTRY/$ECR_REPOSITORY: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
       - name: Logout of ECR
         if: always()
