@@ -27,6 +27,9 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
 
+      - name: Output Run ID
+        run: echo ${{ github.run_id }}
+
       - name: Non-Prod-Build,Tag,Push
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
