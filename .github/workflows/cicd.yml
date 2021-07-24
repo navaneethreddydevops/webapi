@@ -1,0 +1,43 @@
+on:
+  push:
+    branches:
+      - main
+
+name: Package
+
+jobs:
+  deploy:
+    name: Upload to Amazon S3
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        dotnet-version: ["5.0.x"]
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup dotnet
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: ${{ matrix.dotnet-version }}
+
+      - name: Install dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build
+
+      - name: Test with the dotnet CLI
+        run: dotnet test
+
+      - name: Docker ECR
+        uses: appleboy/docker-ecr-action@v0.0.3
+        with:
+          access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          registry: ${{ secrets.registry }}
+          repo: webapi
+          region: us-east-1
+          auto_tag: true
+          daemon_off: false
+          dockerfile: Dockerfile
+          context: .
