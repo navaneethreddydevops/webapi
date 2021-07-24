@@ -7,7 +7,7 @@ name: Package
 
 jobs:
   deploy:
-    name: Upload to Amazon S3
+    name: CI-CD-DOTNET
     runs-on: ubuntu-latest
     strategy:
       matrix:
