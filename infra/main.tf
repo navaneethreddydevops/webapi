@@ -23,7 +23,6 @@ resource "aws_vpc" "vpc_example" {
 }
 
 resource "aws_internet_gateway" "igw" {
-  provider = aws.region
   vpc_id   = aws_vpc.vpc_example.id
   tags = {
     Name = "IGW"
