@@ -45,3 +45,25 @@ resource "aws_subnet" "subnet_2" {
   vpc_id            = aws_vpc.vpc_devops.id
   cidr_block        = "10.0.2.0/24"
 }
+
+resource "aws_route_table" "internet-route" {
+  vpc_id = aws_vpc.vpc_devops.id
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.igw.id
+  }
+  route {
+    cidr_block = "10.0.0.0/16"
+  }
+  lifecycle {
+    ignore_changes = all
+  }
+  tags = {
+    Name = "Route-Table"
+  }
+}
+
+resource "aws_main_route_table_association" "master_route_table_association" {
+  vpc_id         = aws_vpc.vpc_devops.id
+  route_table_id = aws_route_table.internet-route.id
+}
