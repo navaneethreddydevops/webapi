@@ -39,7 +39,7 @@ jobs:
       - name: Terraform Validate
         working-directory: ./infra
         id: validate
-        run: terraform validate -no-
+        run: terraform validate -no-color
 
       - name: Terraform Plan
         id: plan
