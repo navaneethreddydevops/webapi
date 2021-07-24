@@ -7,7 +7,7 @@ terraform {
   }
   backend "s3" {
     bucket = "terraform-state-bucket-cicd"
-    key    = "non-prod"
+    key    = "non-prod/terraform-state-non-prod.json"
     region = "us-east-1"
   }
 }
