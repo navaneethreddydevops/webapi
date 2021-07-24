@@ -3,16 +3,12 @@ on:
     branches:
       - master
 
-name: Package
+name: dotnet-pipeline
 
 jobs:
   deploy:
-    name: CI-CD-DOTNET
+    name: ci-cd-pipeline
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        dotnet-version: ["5.0.x"]
-
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -34,11 +30,10 @@ jobs:
           ECR_REPOSITORY: webapi-nonprod
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY .
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY
-          docker tag $ECR_REGISTRY/$ECR_REPOSITORY: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
       - name: Logout of ECR
         if: always()
         run: docker logout ${{steps.login-ecr.outputs.registry}}
+
