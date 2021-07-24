@@ -5,6 +5,11 @@ terraform {
       version = "~> 3.0"
     }
   }
+  backend "s3" {
+    bucket = "terraform-state-bucket-cicd"
+    key    = "non-prod"
+    region = "us-east-1"
+  }
 }
 
 # Configure the AWS Provider
