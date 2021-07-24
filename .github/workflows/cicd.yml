@@ -57,3 +57,11 @@ jobs:
       - name: Logout of ECR
         if: always()
         run: docker logout ${{steps.login-ecr.outputs.registry}}
+
+    - name: Fill in the new image ID in the Amazon ECS task definition
+      id: task-def
+      uses: aws-actions/amazon-ecs-render-task-definition@v1
+      with:
+        task-definition: webapi.json
+        container-name: webapi
+        image: ${{ steps.build-image.outputs.image }}
