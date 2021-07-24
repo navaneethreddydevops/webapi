@@ -56,9 +56,9 @@ jobs:
         run: docker logout ${{steps.login-ecr.outputs.registry}}
 
       - name: Download task definition
-      run: |
-        aws ecs describe-task-definition --task-definition webapi-nonprod \
-        --query taskDefinition > webapi-nonprod.json
+        run: |
+          aws ecs describe-task-definition --task-definition webapi-nonprod \
+          --query taskDefinition > webapi-nonprod.json
 
       - name: Fill in the new image ID in the Amazon ECS task definition
         id: task-def
