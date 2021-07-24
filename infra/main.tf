@@ -1,5 +1,5 @@
-resource "aws_s3_bucket" "b" {
-  bucket = "my-tf-test-bucket"
+resource "aws_s3_bucket" "s3_bucket" {
+  bucket = "github-actions-workflow-bucket"
   acl    = "private"
 
   tags = {
