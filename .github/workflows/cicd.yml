@@ -35,7 +35,7 @@ jobs:
 
       - name: Build,Tag,Push
         # Publish if prod branch
-        if: contains(github.ref, "prod")
+        if: github.ref == 'refs/heads/prod'
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: webapi-prod
