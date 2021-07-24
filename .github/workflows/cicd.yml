@@ -4,7 +4,7 @@ on:
       - master
       - prod
   pull_request:
-    types: [closed]
+    types: [closed,opened]
 
 name: dotnet-pipeline
 
