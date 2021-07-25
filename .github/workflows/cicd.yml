@@ -33,27 +33,35 @@ jobs:
 
       - name: Terraform Non-prod Init
         working-directory: ./infra
-        id: init
+        id: non-prod-init
         run: terraform init -backend-config=bucket="terraform-state-bucket-cicd" -backend-config="key= "non-prod/terraform-state-non-prod.json" -backend-config="region="us-east-1"
 
       - name: Terraform Prod Init
         if: github.ref == 'refs/heads/prod'
         working-directory: ./infra
-        id: init
+        id: prod-init
         run: terraform init -backend-config=bucket="terraform-state-bucket-cicd" -backend-config="key="prod/terraform-state-prod.json" -backend-config="region="us-east-1"
 
-      - name: Terraform Validate
+      - name: Terraform Non-Prod-Validate
         working-directory: ./infra
-        id: validate
-        run: terraform validate -no-color
+        id: non-prod-validate
+        run: terraform validate -no-color -var-file=environment/non-prod-properties.tfvars
+
+      - name: Terraform Prod-Validate
+        if: github.ref == 'refs/heads/prod'
+        working-directory: ./infra
+        id: prod-validate
+        run: terraform validate -no-color -var-file=environment/prod-properties.tfvars
 
       - name: Terraform Plan
-        id: plan
+        id: non-prod-plan
         working-directory: ./infra
-        run: terraform plan -no-color
+        run: terraform plan -no-color -var-file=environment/non-prod-properties.tfvars
         continue-on-error: true
 
       - name: Terraform Plan Status
+        if: github.ref == 'refs/heads/prod'
+        id: prod-plan
         working-directory: ./infra
         if: steps.plan.outcome == 'failure'
         run: exit 1
