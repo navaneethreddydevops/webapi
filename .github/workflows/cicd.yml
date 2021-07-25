@@ -35,7 +35,7 @@ jobs:
         working-directory: ./infra
         id: non-prod-init
         run:
-          terraform init -backend-config=bucket="terraform-state-bucket-cicd"
+          terraform init -reconfigure -backend-config=bucket="terraform-state-bucket-cicd"
           -backend-config="key= "non-prod/terraform-state-non-prod.json"
           -backend-config="region="us-east-1"
 
@@ -44,7 +44,7 @@ jobs:
         working-directory: ./infra
         id: prod-init
         run:
-          terraform init -backend-config=bucket="terraform-state-bucket-cicd"
+          terraform init -reconfigure -backend-config=bucket="terraform-state-bucket-cicd"
           -backend-config="key="prod/terraform-state-prod.json"
           -backend-config="region="us-east-1"
 
