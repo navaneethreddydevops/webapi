@@ -21,3 +21,7 @@ variable "private_subnet_one_cidr" {
 variable "private_subnet_two_cidr" {
   default = "10.0.4.0/24"
 }
+
+variable "instance_type" {
+  default = "t2.micro"
+}
