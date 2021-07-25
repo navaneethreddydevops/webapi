@@ -33,7 +33,7 @@ resource "aws_vpc" "vpc_devops" {
 resource "aws_internet_gateway" "igw" {
   vpc_id = aws_vpc.vpc_devops.id
   tags = {
-    Name = "VPC"
+    Name = "IGW"
   }
 }
 
@@ -43,16 +43,17 @@ resource "aws_subnet" "public_subnet_one" {
   cidr_block              = var.public_subnet_one_cidr
   map_public_ip_on_launch = true
   tags = {
-    Name = "VPC"
+    Name = "PublicSubnetOne"
   }
 }
 
 resource "aws_subnet" "public_subnet_two" {
-  availability_zone = "us-east-1b"
-  vpc_id            = aws_vpc.vpc_devops.id
-  cidr_block        = var.public_subnet_two_cidr
+  availability_zone       = "us-east-1b"
+  vpc_id                  = aws_vpc.vpc_devops.id
+  cidr_block              = var.public_subnet_two_cidr
+  map_public_ip_on_launch = true
   tags = {
-    Name = "VPC"
+    Name = "PublicSubnetTwo"
   }
 }
 
@@ -61,7 +62,7 @@ resource "aws_subnet" "private_subnet_one" {
   vpc_id            = aws_vpc.vpc_devops.id
   cidr_block        = var.private_subnet_one_cidr
   tags = {
-    Name = "VPC"
+    Name = "PrivateSubnetOne"
   }
 }
 
@@ -70,7 +71,7 @@ resource "aws_subnet" "private_subnet_two" {
   vpc_id            = aws_vpc.vpc_devops.id
   cidr_block        = var.private_subnet_two_cidr
   tags = {
-    Name = "VPC"
+    Name = "PrivateSubnetTwo"
   }
 }
 
@@ -84,7 +85,7 @@ resource "aws_route_table" "public_route_table" {
     ignore_changes = all
   }
   tags = {
-    Name = "VPC"
+    Name = "PublicRouteTable"
   }
 }
 
@@ -94,13 +95,8 @@ resource "aws_route_table" "private_route_table" {
     ignore_changes = all
   }
   tags = {
-    Name = "VPC"
+    Name = "PrivateRouteTable"
   }
-}
-
-resource "aws_main_route_table_association" "vpc_main_route_table" {
-  vpc_id         = aws_vpc.vpc_devops.id
-  route_table_id = aws_route_table.public_route_table.id
 }
 
 resource "aws_route_table_association" "public_subnet_one_association" {
@@ -125,10 +121,12 @@ resource "aws_route_table_association" "private_subnet_two_association" {
 
 # Launch Configuration
 resource "aws_launch_configuration" "launch_configuartion" {
-  image_id        = data.aws_ami.ubuntu.id
-  instance_type   = var.instance_type
-  security_groups = [aws_security_group.instance_security_group.id]
-
+  image_id             = "ami-0b0af3577fe5e3532"
+  instance_type        = var.instance_type
+  security_groups      = [aws_security_group.instance_security_group.id]
+  iam_instance_profile = aws_iam_instance_profile.instance_profile.id
+  key_name             = "keypair"
+  user_data            = file("userdata.sh")
   lifecycle {
     create_before_destroy = true
   }
@@ -154,8 +152,19 @@ resource "aws_iam_role" "instance_iam_role" {
     tag-key = "instance_iam_role"
   }
 }
+# Instance Profile for Role
+resource "aws_iam_instance_profile" "instance_profile" {
+  name = "instance_profile"
+  role = aws_iam_role.instance_iam_role.name
+}
 
+# Attach AWS Managed policies
+resource "aws_iam_role_policy_attachment" "aws_managed_policy_attachment" {
+  role       = aws_iam_role.instance_iam_role.name
+  policy_arn = data.aws_iam_policy.ReadOnlyAccess.arn
+}
 
+# Instance Security Group
 resource "aws_security_group" "instance_security_group" {
   name   = "instance_security_group"
   vpc_id = aws_vpc.vpc_devops.id
@@ -164,6 +173,20 @@ resource "aws_security_group" "instance_security_group" {
   ingress {
     from_port   = "22"
     to_port     = "22"
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = "443"
+    to_port     = "443"
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = "80"
+    to_port     = "80"
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }

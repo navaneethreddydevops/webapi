@@ -17,3 +17,12 @@ data "aws_ami" "ubuntu" {
 }
 
 data "aws_availability_zones" "available" {}
+
+
+data "template_file" "user_data" {
+  template = file("userdata.sh")
+}
+
+data "aws_iam_policy" "ReadOnlyAccess" {
+  arn = "arn:aws:iam::aws:policy/ReadOnlyAccess"
+}
