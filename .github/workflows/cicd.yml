@@ -4,7 +4,7 @@ on:
       - master
       - prod
   pull_request:
-    types: [closed]
+    types: [closed, opened]
 
 name: dotnet-pipeline
 
@@ -31,55 +31,60 @@ jobs:
         working-directory: ./infra
         run: terraform fmt -check
 
-      - name: Terraform Init
+      - name: Terraform Non-prod Init
         working-directory: ./infra
-        id: init
-        run: terraform init
+        id: non-prod-init
+        run:
+          terraform init -backend-config=bucket="terraform-state-bucket-cicd"
+          -backend-config="key= "non-prod/terraform-state-non-prod.json"
+          -backend-config="region="us-east-1"
 
-      - name: Terraform Validate
+      - name: Terraform Prod Init
+        if: github.ref == 'refs/heads/prod'
         working-directory: ./infra
-        id: validate
-        run: terraform validate -no-color
+        id: prod-init
+        run:
+          terraform init -backend-config=bucket="terraform-state-bucket-cicd"
+          -backend-config="key="prod/terraform-state-prod.json"
+          -backend-config="region="us-east-1"
+
+      - name: Terraform Non-Prod-Validate
+        working-directory: ./infra
+        id: non-prod-validate
+        run: terraform validate
+
+      - name: Terraform Prod-Validate
+        if: github.ref == 'refs/heads/prod'
+        working-directory: ./infra
+        id: prod-validate
+        run: terraform validate
 
       - name: Terraform Plan
-        id: plan
+        id: non-prod-plan
         working-directory: ./infra
-        if: github.event_name == 'pull_request'
-        run: terraform plan -no-color
+        run:
+          terraform plan -no-color
+          -var-file=environment/non-prod-properties.tfvars
         continue-on-error: true
-      - uses: actions/github-script@0.9.0
-        if: github.event_name == 'pull_request'
-        env:
-          PLAN: "terraform\n${{ steps.plan.outputs.stdout }}"
-        with:
-          github-token: ${{ secrets.TERRAFORM_FLOW }}
-          script: |
-            const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
-            #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
-            #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\`
-            #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
-            <details><summary>Show Plan</summary>
-            \`\`\`\n
-            ${process.env.PLAN}
-            \`\`\`
-            </details>
-            *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
-            github.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: output
-            })
 
       - name: Terraform Plan Status
+        id: prod-plan
         working-directory: ./infra
         if: steps.plan.outcome == 'failure'
         run: exit 1
 
-      - name: Terraform Apply
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      - name: Terraform Non-Prod-Apply
         working-directory: ./infra
-        run: terraform apply -auto-approve
+        run:
+          terraform apply -var-file=environment/non-prod-properties.tfvars
+          --auto-approve
+
+      - name: Terraform Prod-Apply
+        if: github.ref == 'refs/heads/prod'
+        working-directory: ./infra
+        run:
+          terraform apply -var-file=environment/prod-properties.tfvars
+          --auto-approve
 
       - name: Login to Amazon ecr
         id: login-ecr
@@ -120,22 +125,20 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION}}
-
-      - name: Create CodeDeploy Deployment
-        id: deploy-non-prod
-        run: |
-          aws deploy create-deployment \
-            --application-name webapi-nonprod \
-            --deployment-group-name AppDeploymentGroupName \
-            --deployment-config-name CodeDeployDefault.OneAtATime \
-            --github-location repository=${{ github.repository }},commitId=${{ github.sha }}
-
-      - name: Create CodeDeploy Deployment
-        if: github.ref == 'refs/heads/prod'
-        id: deploy-prod
-        run: |
-          aws deploy create-deployment \
-            --application-name webapi-nonprod \
-            --deployment-group-name AppDeploymentGroupName \
-            --deployment-config-name CodeDeployDefault.OneAtATime \
-            --github-location repository=${{ github.repository }},commitId=${{ github.sha }}
+      # - name: Create CodeDeploy Deployment
+      #   id: deploy-non-prod
+      #   run: |
+      #     aws deploy create-deployment \
+      #       --application-name webapi-nonprod \
+      #       --deployment-group-name AppDeploymentGroupName \
+      #       --deployment-config-name CodeDeployDefault.OneAtATime \
+      #       --github-location repository=${{ github.repository }},commitId=${{ github.sha }}
+      # - name: Create CodeDeploy Deployment
+      #   if: github.ref == 'refs/heads/prod'
+      #   id: deploy-prod
+      #   run: |
+      #     aws deploy create-deployment \
+      #       --application-name webapi-nonprod \
+      #       --deployment-group-name AppDeploymentGroupName \
+      #       --deployment-config-name CodeDeployDefault.OneAtATime \
+      #       --github-location repository=${{ github.repository }},commitId=${{ github.sha }}
