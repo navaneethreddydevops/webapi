@@ -60,7 +60,6 @@ jobs:
         continue-on-error: true
 
       - name: Terraform Plan Status
-        if: github.ref == 'refs/heads/prod'
         id: prod-plan
         working-directory: ./infra
         if: steps.plan.outcome == 'failure'
