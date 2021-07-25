@@ -1,29 +1,31 @@
 variable "aws_region" {
-    type = any
+  type = any
 }
 
 variable "environment" {
-    type = any
+  type = any
 }
 
 variable "cidr_block" {
-    type = any
+  type = any
 }
 
 variable "public_subnet_one_cidr" {
-    type = any
+  type = any
 }
 
 variable "public_subnet_two_cidr" {
-    type = any
+  type = any
 }
 
 variable "private_subnet_one_cidr" {
-    type = any
+  type = any
 }
 
 variable "private_subnet_two_cidr" {
-    type = any
+  type = any
 }
 
-
+variable "node_type" {
+  type = any
+}

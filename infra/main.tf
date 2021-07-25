@@ -6,9 +6,6 @@ terraform {
     }
   }
   backend "s3" {
-    bucket = "terraform-state-bucket-cicd"
-    key    = "non-prod/terraform-state-non-prod.json"
-    region = "us-east-1"
   }
 }
 
@@ -24,7 +21,7 @@ resource "aws_vpc" "vpc_devops" {
   enable_dns_hostnames = true
   enable_classiclink   = "false"
   tags = {
-    Name = "VPC"
+    Name = "VPC-${var.environment}"
   }
 }
 
@@ -33,7 +30,7 @@ resource "aws_vpc" "vpc_devops" {
 resource "aws_internet_gateway" "igw" {
   vpc_id = aws_vpc.vpc_devops.id
   tags = {
-    Name = "igw"
+    Name = "igw-${var.environment}"
   }
 }
 
@@ -43,7 +40,7 @@ resource "aws_subnet" "public_subnet_one" {
   cidr_block              = var.public_subnet_one_cidr
   map_public_ip_on_launch = true
   tags = {
-    Name = "PublicSubnetOne"
+    Name = "PublicSubnetOne-${var.environment}"
   }
 }
 
@@ -53,7 +50,7 @@ resource "aws_subnet" "public_subnet_two" {
   cidr_block              = var.public_subnet_two_cidr
   map_public_ip_on_launch = true
   tags = {
-    Name = "PublicSubnetTwo"
+    Name = "PublicSubnetTwo-${var.environment}"
   }
 }
 
@@ -62,7 +59,7 @@ resource "aws_subnet" "private_subnet_one" {
   vpc_id            = aws_vpc.vpc_devops.id
   cidr_block        = var.private_subnet_one_cidr
   tags = {
-    Name = "PrivateSubnetOne"
+    Name = "PrivateSubnetOne-${var.environment}"
   }
 }
 
@@ -71,7 +68,7 @@ resource "aws_subnet" "private_subnet_two" {
   vpc_id            = aws_vpc.vpc_devops.id
   cidr_block        = var.private_subnet_two_cidr
   tags = {
-    Name = "PrivateSubnetTwo"
+    Name = "PrivateSubnetTwo-${var.environment}"
   }
 }
 
@@ -85,7 +82,7 @@ resource "aws_route_table" "public_route_table" {
     ignore_changes = all
   }
   tags = {
-    Name = "PublicRouteTable"
+    Name = "PublicRouteTable-${var.environment}"
   }
 }
 
@@ -95,7 +92,7 @@ resource "aws_route_table" "private_route_table" {
     ignore_changes = all
   }
   tags = {
-    Name = "PrivateRouteTable"
+    Name = "PrivateRouteTable-${var.environment}"
   }
 }
 
@@ -121,15 +118,13 @@ resource "aws_route_table_association" "private_subnet_two_association" {
 
 # Launch Configuration
 resource "aws_launch_configuration" "launch_configuartion" {
-  image_id             = "ami-0b0af3577fe5e3532"
-  instance_type        = "t2.micro"
+  name                 = "launch_configuration-${var.environment}"
+  image_id             = data.aws_ami.amazon_ami.id
+  instance_type        = var.node_type
   security_groups      = [aws_security_group.instance_security_group.id]
   iam_instance_profile = aws_iam_instance_profile.instance_profile.id
   key_name             = "keypair"
   user_data            = file("userdata.sh")
-  lifecycle {
-    create_before_destroy = true
-  }
 }
 # IAM Role for EC2 Instance
 resource "aws_iam_role" "instance_iam_role" {
@@ -149,7 +144,7 @@ resource "aws_iam_role" "instance_iam_role" {
   })
 
   tags = {
-    tag-key = "instance_iam_role"
+    tag-key = "instance_iam_role-${var.environment}"
   }
 }
 # Instance Profile for Role
@@ -201,6 +196,9 @@ resource "aws_security_group" "instance_security_group" {
 
   lifecycle {
     create_before_destroy = true
+  }
+  tags = {
+    Name = "instance-security-group-${var.environment}"
   }
 }
 
