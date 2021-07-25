@@ -31,10 +31,16 @@ jobs:
         working-directory: ./infra
         run: terraform fmt -check
 
-      - name: Terraform Init
+      - name: Terraform Non-prod Init
         working-directory: ./infra
         id: init
-        run: terraform init
+        run: terraform init -backend-config=bucket="terraform-state-bucket-cicd" -backend-config="key= "non-prod/terraform-state-non-prod.json" -backend-config="region="us-east-1"
+
+      - name: Terraform Prod Init
+        if: github.ref == 'refs/heads/prod'
+        working-directory: ./infra
+        id: init
+        run: terraform init -backend-config=bucket="terraform-state-bucket-cicd" -backend-config="key="prod/terraform-state-prod.json" -backend-config="region="us-east-1"
 
       - name: Terraform Validate
         working-directory: ./infra
@@ -52,9 +58,14 @@ jobs:
         if: steps.plan.outcome == 'failure'
         run: exit 1
 
-      - name: Terraform Apply
+      - name: Terraform Non-Prod-Apply
         working-directory: ./infra
-        run: terraform apply -auto-approve
+        run: terraform apply -var-file=environment/non-prod-properties.tfvars --auto-approve
+
+      - name: Terraform Prod-Apply
+        if: github.ref == 'refs/heads/prod'
+        working-directory: ./infra
+        run: terraform apply -var-file=environment/prod-properties.tfvars --auto-approve
 
       - name: Login to Amazon ecr
         id: login-ecr
