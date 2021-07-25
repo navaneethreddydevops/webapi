@@ -4,7 +4,7 @@ on:
       - master
       - prod
   pull_request:
-    types: [closed,opened]
+    types: [closed, opened]
 
 name: dotnet-pipeline
 
@@ -34,29 +34,37 @@ jobs:
       - name: Terraform Non-prod Init
         working-directory: ./infra
         id: non-prod-init
-        run: terraform init -backend-config=bucket="terraform-state-bucket-cicd" -backend-config="key= "non-prod/terraform-state-non-prod.json" -backend-config="region="us-east-1"
+        run:
+          terraform init -backend-config=bucket="terraform-state-bucket-cicd"
+          -backend-config="key= "non-prod/terraform-state-non-prod.json"
+          -backend-config="region="us-east-1"
 
       - name: Terraform Prod Init
         if: github.ref == 'refs/heads/prod'
         working-directory: ./infra
         id: prod-init
-        run: terraform init -backend-config=bucket="terraform-state-bucket-cicd" -backend-config="key="prod/terraform-state-prod.json" -backend-config="region="us-east-1"
+        run:
+          terraform init -backend-config=bucket="terraform-state-bucket-cicd"
+          -backend-config="key="prod/terraform-state-prod.json"
+          -backend-config="region="us-east-1"
 
       - name: Terraform Non-Prod-Validate
         working-directory: ./infra
         id: non-prod-validate
-        run: terraform validate -no-color -var-file=environment/non-prod-properties.tfvars
+        run: terraform validate
 
       - name: Terraform Prod-Validate
         if: github.ref == 'refs/heads/prod'
         working-directory: ./infra
         id: prod-validate
-        run: terraform validate -no-color -var-file=environment/prod-properties.tfvars
+        run: terraform validate
 
       - name: Terraform Plan
         id: non-prod-plan
         working-directory: ./infra
-        run: terraform plan -no-color -var-file=environment/non-prod-properties.tfvars
+        run:
+          terraform plan -no-color
+          -var-file=environment/non-prod-properties.tfvars
         continue-on-error: true
 
       - name: Terraform Plan Status
@@ -67,12 +75,16 @@ jobs:
 
       - name: Terraform Non-Prod-Apply
         working-directory: ./infra
-        run: terraform apply -var-file=environment/non-prod-properties.tfvars --auto-approve
+        run:
+          terraform apply -var-file=environment/non-prod-properties.tfvars
+          --auto-approve
 
       - name: Terraform Prod-Apply
         if: github.ref == 'refs/heads/prod'
         working-directory: ./infra
-        run: terraform apply -var-file=environment/prod-properties.tfvars --auto-approve
+        run:
+          terraform apply -var-file=environment/prod-properties.tfvars
+          --auto-approve
 
       - name: Login to Amazon ecr
         id: login-ecr
