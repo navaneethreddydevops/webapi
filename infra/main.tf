@@ -33,7 +33,7 @@ resource "aws_vpc" "vpc_devops" {
 resource "aws_internet_gateway" "igw" {
   vpc_id = aws_vpc.vpc_devops.id
   tags = {
-    Name = "IGW"
+    Name = "igw"
   }
 }
 
@@ -122,7 +122,7 @@ resource "aws_route_table_association" "private_subnet_two_association" {
 # Launch Configuration
 resource "aws_launch_configuration" "launch_configuartion" {
   image_id             = "ami-0b0af3577fe5e3532"
-  instance_type        = var.instance_type
+  instance_type        = "t2.micro"
   security_groups      = [aws_security_group.instance_security_group.id]
   iam_instance_profile = aws_iam_instance_profile.instance_profile.id
   key_name             = "keypair"
@@ -133,7 +133,7 @@ resource "aws_launch_configuration" "launch_configuartion" {
 }
 # IAM Role for EC2 Instance
 resource "aws_iam_role" "instance_iam_role" {
-  name = "instance_iam_role"
+  name = "${var.environment}-instance_iam_role"
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -154,7 +154,7 @@ resource "aws_iam_role" "instance_iam_role" {
 }
 # Instance Profile for Role
 resource "aws_iam_instance_profile" "instance_profile" {
-  name = "instance_profile"
+  name = "${var.environment}-instance_profile"
   role = aws_iam_role.instance_iam_role.name
 }
 
@@ -166,7 +166,7 @@ resource "aws_iam_role_policy_attachment" "aws_managed_policy_attachment" {
 
 # Instance Security Group
 resource "aws_security_group" "instance_security_group" {
-  name   = "instance_security_group"
+  name   = "${var.environment}-instance_security_group"
   vpc_id = aws_vpc.vpc_devops.id
 
   # Inbound SSH
@@ -205,7 +205,7 @@ resource "aws_security_group" "instance_security_group" {
 }
 
 resource "aws_autoscaling_group" "auto_scaling_group" {
-  name                 = "auto_scaling_group"
+  name                 = "${var.environment}-auto_scaling_group"
   launch_configuration = aws_launch_configuration.launch_configuartion.name
   min_size             = 1
   max_size             = 2
