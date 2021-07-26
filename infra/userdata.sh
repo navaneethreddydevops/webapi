@@ -8,8 +8,8 @@ pip3 install boto3 --user
 yum remove docker docker-common docker-selinux docker-engine-selinux docker-engine docker-ce -y
 yum install -y yum-utils device-mapper-persistent-data lvm2
 yum install docker -y
-systemctl enable docker.service
-systemctl start docker
+yum install systemd -y
+service docker start
 curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
 unzip awscliv2.zip
 sudo ./aws/install
