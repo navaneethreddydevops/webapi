@@ -15,8 +15,8 @@ provider "aws" {
 }
 
 locals {
-  timestamp = "${timestamp()}"
-  timestamp_sanitized = "${replace("${local.timestamp}", "/[- TZ:]/", "")}"
+  timestamp           = timestamp()
+  timestamp_sanitized = replace("${local.timestamp}", "/[- TZ:]/", "")
 
 }
 
@@ -131,7 +131,7 @@ resource "aws_launch_configuration" "launch_configuartion" {
   iam_instance_profile = aws_iam_instance_profile.instance_profile.id
   key_name             = "keypair"
   user_data            = file("userdata.sh")
-    lifecycle {
+  lifecycle {
     create_before_destroy = true
   }
 }
