@@ -14,6 +14,8 @@ provider "aws" {
   region = var.aws_region
 }
 
+resource "random_uuid" "test" {
+}
 
 # Create a VPC
 resource "aws_vpc" "vpc_devops" {
@@ -119,7 +121,7 @@ resource "aws_route_table_association" "private_subnet_two_association" {
 
 # Launch Configuration
 resource "aws_launch_configuration" "launch_configuartion" {
-  name                 = "launch_configuration-${var.environment}"
+  name                 = "launch_configuration-${var.environment}-${random_uuid.test.result}"
   image_id             = data.aws_ami.amazon_ami.id
   instance_type        = var.node_type
   security_groups      = [aws_security_group.instance_security_group.id]
