@@ -220,7 +220,7 @@ resource "aws_security_group" "instance_security_group" {
 }
 
 resource "aws_autoscaling_group" "auto_scaling_group" {
-  name                 = "${var.environment}-auto_scaling_group"
+  name_prefix          = "${aws_launch_configuration.launch_configuartion.name}-${var.environment}-auto_scaling_group"
   launch_configuration = aws_launch_configuration.launch_configuartion.name
   min_size             = 1
   max_size             = 2
