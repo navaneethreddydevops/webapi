@@ -125,7 +125,12 @@ resource "aws_launch_configuration" "launch_configuartion" {
   iam_instance_profile = aws_iam_instance_profile.instance_profile.id
   key_name             = "keypair"
   user_data            = file("userdata.sh")
+    lifecycle {
+    create_before_destroy = true
+  }
 }
+
+
 # IAM Role for EC2 Instance
 resource "aws_iam_role" "instance_iam_role" {
   name = "${var.environment}-instance_iam_role"
