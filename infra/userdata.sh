@@ -18,3 +18,5 @@ chmod +x ./install
 ./install auto
 service codedeploy-agent start
 echo "End of UserData"
+echo "End of UserData"
+
