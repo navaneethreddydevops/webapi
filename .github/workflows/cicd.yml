@@ -1,7 +1,8 @@
 on:
   push:
     branches:
-      - master
+      - dev
+      - qa
       - prod
   pull_request:
     types: [merged]
