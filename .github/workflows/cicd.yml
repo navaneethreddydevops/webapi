@@ -29,6 +29,7 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v1
 
       - name: Non-Prod-Build,Tag,Push
+        if: github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/qa'
         id: non-prod-build
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
