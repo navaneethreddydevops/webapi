@@ -29,6 +29,7 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v1
 
       - name: Non-Prod-Build,Tag,Push
+        id: non-prod-build
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: webapi-nonprod
@@ -40,6 +41,7 @@ jobs:
 
       - name: Prod-Build,Tag,Push
         # Publish if prod branch
+        id: prod-build
         if: github.ref == 'refs/heads/prod'
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
@@ -69,18 +71,18 @@ jobs:
         if: github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/qa'
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
-          task-definition: web-api.json
+          task-definition: task-definition.json
           container-name: web-api
-          image: ${{ steps.build-image.outputs.image }}
+          image: ${{ steps.non-prod-build.outputs.image }}
 
       - name: Fill in the new image ID in the Amazon ECS task definition
         id: task-def
         if: github.ref == 'refs/heads/prod'
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
-          task-definition: web-api.json
+          task-definition: task-definition.json
           container-name: web-api
-          image: ${{ steps.build-image.outputs.image }}
+          image: ${{ steps.prod-build.outputs.image }}
 
       - name: Deploy Amazon ECS task definition
         if: github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/qa'
