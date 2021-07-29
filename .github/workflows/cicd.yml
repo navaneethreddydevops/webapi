@@ -62,7 +62,7 @@ jobs:
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
           task-definition: task-definition-non-prod.json
-          container-name: web-api
+          container-name: webapi-nonprod
           image: ${{ steps.non-prod-build.outputs.image }}
 
       - name: Fill in the new image ID in the Amazon ECS task definition
@@ -71,7 +71,7 @@ jobs:
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
           task-definition: task-definition-prod.json
-          container-name: web-api
+          container-name: webapi-prod
           image: ${{ steps.prod-build.outputs.image }}
 
       - name: Deploy Amazon ECS task definition
