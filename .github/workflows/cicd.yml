@@ -58,19 +58,21 @@ jobs:
 
       - name: Fill in the new image ID in the Amazon ECS task definition
         id: webapi-nonprod
+        working-directory: ./tasks
         if: github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/qa'
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
-          task-definition: task-definition.json
+          task-definition: task-definition-non-prod.json
           container-name: web-api
           image: ${{ steps.non-prod-build.outputs.image }}
 
       - name: Fill in the new image ID in the Amazon ECS task definition
         id: webapi-prod
+        working-directory: ./tasks
         if: github.ref == 'refs/heads/prod'
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
-          task-definition: task-definition.json
+          task-definition: task-definition-prod.json
           container-name: web-api
           image: ${{ steps.prod-build.outputs.image }}
 

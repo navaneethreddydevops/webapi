@@ -3,7 +3,7 @@
     "containerDefinitions": [
         {
             "image": "%ACCOUNT%.dkr.ecr.eu-central-1.amazonaws.com/%REPO%:%BUILD_TAG%",
-            "name": "web-api",
+            "name": "webapi-nonprod",
             "essential": true,
             "cpu": 100,
             "memoryReservation": 300,
