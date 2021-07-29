@@ -84,7 +84,7 @@ jobs:
           wait-for-service-stability: false
 
       - name: Deploy Amazon ECS task definition
-        if: github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/qa'
+        if: github.ref == 'refs/heads/prod'
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
           task-definition: ${{ steps.webapi-prod.outputs.task-definition }}

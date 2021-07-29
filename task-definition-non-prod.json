@@ -5,7 +5,7 @@
             "image": "%ACCOUNT%.dkr.ecr.eu-central-1.amazonaws.com/%REPO%:%BUILD_TAG%",
             "name": "webapi-nonprod",
             "essential": true,
-            "cpu": 100,
+            "cpu": 10,
             "memoryReservation": 300,
             "portMappings": [
                 {
