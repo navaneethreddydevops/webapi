@@ -1,7 +1,8 @@
 on:
   push:
     branches:
-      - master
+      - dev
+      - qa
       - prod
   pull_request:
     types: [merged]
@@ -23,78 +24,12 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION}}
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v1
-
-      - name: Terraform Format
-        id: fmt
-        working-directory: ./infra
-        run: terraform fmt -check
-
-      - name: Terraform Non-prod Init
-        if: github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/qa'
-        working-directory: ./infra
-        id: non-prod-init
-        run:
-          terraform init -reconfigure -backend-config=bucket="terraform-state-bucket-cicd"
-          -backend-config="key= "non-prod/terraform-state-non-prod.json"
-          -backend-config="region="us-east-1"
-
-      - name: Terraform Prod Init
-        if: github.ref == 'refs/heads/prod'
-        working-directory: ./infra
-        id: prod-init
-        run:
-          terraform init -reconfigure -backend-config=bucket="terraform-state-bucket-cicd"
-          -backend-config="key="prod/terraform-state-prod.json"
-          -backend-config="region="us-east-1"
-
-      - name: Terraform Non-Prod-Validate
-        if: github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/qa'
-        working-directory: ./infra
-        id: non-prod-validate
-        run: terraform validate
-
-      - name: Terraform Prod-Validate
-        if: github.ref == 'refs/heads/prod'
-        working-directory: ./infra
-        id: prod-validate
-        run: terraform validate
-
-      - name: Terraform Plan
-        if: github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/qa'
-        id: non-prod-plan
-        working-directory: ./infra
-        run:
-          terraform plan -no-color
-          -var-file=environment/non-prod-properties.tfvars
-        continue-on-error: true
-
-      - name: Terraform Plan Status
-        id: prod-plan
-        working-directory: ./infra
-        if: steps.plan.outcome == 'failure'
-        run: exit 1
-
-      - name: Terraform Non-Prod-Apply
-        if: github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/qa'
-        working-directory: ./infra
-        run:
-          terraform apply -var-file=environment/non-prod-properties.tfvars
-          --auto-approve
-
-      - name: Terraform Prod-Apply
-        if: github.ref == 'refs/heads/prod'
-        working-directory: ./infra
-        run:
-          terraform apply -var-file=environment/prod-properties.tfvars
-          --auto-approve
-
       - name: Login to Amazon ecr
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
 
       - name: Non-Prod-Build,Tag,Push
+        id: non-prod-build
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: webapi-nonprod
@@ -106,6 +41,7 @@ jobs:
 
       - name: Prod-Build,Tag,Push
         # Publish if prod branch
+        id: prod-build
         if: github.ref == 'refs/heads/prod'
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
@@ -119,30 +55,39 @@ jobs:
       - name: Logout of ECR
         if: always()
         run: docker logout ${{steps.login-ecr.outputs.registry}}
-  continuous-deployment:
-    runs-on: ubuntu-latest
-    needs: [continuous-integration]
-    steps:
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
+
+      - name: Fill in the new image ID in the Amazon ECS task definition
+        id: webapi-nonprod
+        if: github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/qa'
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION}}
-      # - name: Create CodeDeploy Deployment
-      #   id: deploy-non-prod
-      #   run: |
-      #     aws deploy create-deployment \
-      #       --application-name webapi-nonprod \
-      #       --deployment-group-name AppDeploymentGroupName \
-      #       --deployment-config-name CodeDeployDefault.OneAtATime \
-      #       --github-location repository=${{ github.repository }},commitId=${{ github.sha }}
-      # - name: Create CodeDeploy Deployment
-      #   if: github.ref == 'refs/heads/prod'
-      #   id: deploy-prod
-      #   run: |
-      #     aws deploy create-deployment \
-      #       --application-name webapi-nonprod \
-      #       --deployment-group-name AppDeploymentGroupName \
-      #       --deployment-config-name CodeDeployDefault.OneAtATime \
-      #       --github-location repository=${{ github.repository }},commitId=${{ github.sha }}
+          task-definition: task-definition-non-prod.json
+          container-name: webapi-nonprod
+          image: ${{ steps.non-prod-build.outputs.image }}
+
+      - name: Fill in the new image ID in the Amazon ECS task definition
+        id: webapi-prod
+        if: github.ref == 'refs/heads/prod'
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-definition-prod.json
+          container-name: webapi-prod
+          image: ${{ steps.prod-build.outputs.image }}
+
+      - name: Deploy Amazon ECS task definition
+        if: github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/qa'
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.webapi-nonprod.outputs.task-definition }}
+          service: webapi-nonprod
+          cluster: micro-service-cluster-non-prod
+          wait-for-service-stability: false
+
+      - name: Deploy Amazon ECS task definition
+        if: github.ref == 'refs/heads/prod'
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.webapi-prod.outputs.task-definition }}
+          service: webapi-prod
+          cluster: micro-service-cluster-prod
+          wait-for-service-stability: false

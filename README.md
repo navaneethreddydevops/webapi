@@ -1,2 +1,2 @@
-# webapi
-Sample .NET Core 5 Web API
+https://aws.amazon.com/blogs/opensource/github-actions-aws-fargate/
+
