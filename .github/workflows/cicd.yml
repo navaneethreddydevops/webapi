@@ -81,7 +81,7 @@ jobs:
           task-definition: ${{ steps.task-def.outputs.task-definition }}
           service: web-api-service
           cluster: micro-service-cluster
-          wait-for-service-stability: true
+          wait-for-service-stability: false
 
       - name: Deploy Amazon ECS task definition
         if: github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/qa'
@@ -90,4 +90,4 @@ jobs:
           task-definition: ${{ steps.task-def.outputs.task-definition }}
           service: web-api-service
           cluster: micro-service-cluster
-          wait-for-service-stability: true
+          wait-for-service-stability: false
