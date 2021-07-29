@@ -57,7 +57,7 @@ jobs:
         run: docker logout ${{steps.login-ecr.outputs.registry}}
 
       - name: Fill in the new image ID in the Amazon ECS task definition
-        id: task-def-non-prod
+        id: webapi-nonprod
         if: github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/qa'
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
@@ -66,7 +66,7 @@ jobs:
           image: ${{ steps.non-prod-build.outputs.image }}
 
       - name: Fill in the new image ID in the Amazon ECS task definition
-        id: task-def
+        id: webapi-prod
         if: github.ref == 'refs/heads/prod'
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
@@ -78,7 +78,7 @@ jobs:
         if: github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/qa'
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
-          task-definition: ${{ steps.task-def.outputs.task-definition }}
+          task-definition: ${{ steps.webapi-nonprod.outputs.task-definition }}
           service: web-api-service
           cluster: micro-service-cluster
           wait-for-service-stability: false
@@ -87,7 +87,7 @@ jobs:
         if: github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/qa'
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
-          task-definition: ${{ steps.task-def.outputs.task-definition }}
+          task-definition: ${{ steps.webapi-prod.outputs.task-definition }}
           service: web-api-service
           cluster: micro-service-cluster
           wait-for-service-stability: false
