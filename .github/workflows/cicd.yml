@@ -80,7 +80,7 @@ jobs:
         with:
           task-definition: ${{ steps.webapi-nonprod.outputs.task-definition }}
           service: webapi-nonprod
-          cluster: micro-service-cluster
+          cluster: micro-service-cluster-non-prod
           wait-for-service-stability: false
 
       - name: Deploy Amazon ECS task definition
@@ -89,5 +89,5 @@ jobs:
         with:
           task-definition: ${{ steps.webapi-prod.outputs.task-definition }}
           service: webapi-prod
-          cluster: micro-service-cluster
+          cluster: micro-service-cluster-prod
           wait-for-service-stability: false
